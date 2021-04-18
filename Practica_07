@@ -1,0 +1,98 @@
+/ Dispositivo:    PIC 16F887
+// Hadward:        Display y push botton
+// Autor:          Selvin E. Peralta Cifuentes
+// Fecha Creadad:  13 de Abril 2021
+// Ultima Actualizacion:
+
+// ----------------- Laboratorio No.7 ----------------------------------------
+
+#pragma config FOSC=INTRC_NOCLKOUT //Oscilador interno sin salidas
+#pragma config WDTE=OFF	           //WDT disabled (reinicio repetitivo del pic)
+#pragma config PWRTE=ON	           //PWRT enabled (espera de 72ms al iniciar
+#pragma config MCLRE=OFF	       //pin MCLR se utiliza como I/O
+#pragma config CP=OFF		       //sin protección de código
+#pragma config CPD=OFF		       //sin protección de datos
+#pragma config BOREN=OFF	       //sin reinicio cuando el voltaje baja de 4v
+#pragma config IESO=OFF	           //Reinicio sin cambio de reloj de interno a externo
+#pragma config FCMEN=OFF	       //Cambio de reloj externo a interno en caso de falla
+#pragma config LVP=OFF
+
+
+ 
+//------------------ Configuración word2 --------------------------------------
+#pragma config WRT=OFF	//Protección de autoescritura 
+#pragma config BOR4V=BOR40V	//Reinicio abajo de 4V 
+  
+
+
+#include<xc.h>
+#include<stdint.h>
+
+
+void setup(void);
+
+void __interrupt() isr(void){
+    if(T0IF == 1) {
+        PORTA = PORTA +1;
+        INTCONbits.T0IF = 0;
+        TMR0 = 236;
+    }
+    if(RBIF == 1){
+        if(PORTBbits.RB0 == 0){
+            PORTC = PORTC + 1;
+        }
+        if(PORTBbits.RB1 == 0){
+            PORTC = PORTC - 1;
+        }
+        INTCONbits.RBIF = 0;
+    }
+}
+
+//---------------- LOOP Principal ----------------------------------------------
+void main(void){
+    setup();
+    while(1)
+    {}
+}
+
+//---------------- Configuraciones Generales ----------------------------------
+void setup(void){
+//-------  Asigancion de Pines Didigitales
+    ANSEL  = 0x00;
+    ANSELH = 0x00;
+   
+    TRISBbits.TRISB0 = 1;
+    TRISBbits.TRISB1 = 1;
+    TRISC = 0x00;
+    TRISA = 0x00;
+    
+    
+    PORTB = 0x00;
+    PORTC = 0x00;
+    PORTA = 0x00;
+    
+//-------------------- Configuraciones del Reloj -------------------------------
+    OSCCONbits.IRCF2 = 1;
+    OSCCONbits.IRCF1 = 1;
+    OSCCONbits.IRCF0 = 0;
+    OSCCONbits.SCS   = 1;
+//--------------------- Configuraciones del IoC --------------------------------
+    OPTION_REGbits.nRBPU = 0;
+    WPUB = 0b00000011;
+    IOCBbits.IOCB0 = 1;
+    IOCBbits.IOCB1 = 1;
+    
+//------------------ Configuraciones de TMR0 ------------------------------------
+    OPTION_REGbits.T0CS = 0;
+    OPTION_REGbits.PSA  = 0;
+    OPTION_REGbits.PS2  = 1;
+    OPTION_REGbits.PS1  = 1;
+    OPTION_REGbits.PS0  = 1;
+  
+   
+//-------------------- Configuracion del las interrupciones --------------------
+    INTCONbits.GIE  = 1 ;
+    INTCONbits.RBIF = 1 ;
+    INTCONbits.RBIE = 1 ;
+    INTCONbits.T0IE = 1 ;
+}
